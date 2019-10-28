@@ -526,7 +526,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_list_of_events_tracked_by_the_auditing_plugin">List of events tracked by the auditing plugin</a></li>
 </ul>
 </li>
-<li><a href="#_filesystem_layout">Filesystem Layout</a></li>
+<li><a href="#_filesystem_layout">Filesystem layout</a>
+<ul class="sectlevel2">
+<li><a href="#_terms_and_variables_for_certain_directories_used_by_openqa_and_isotovideo">Terms and variables for certain directories used by openQA and isotovideo</a>
+<ul class="sectlevel3">
+<li><a href="#_further_notes">Further notes</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a href="#_troubleshooting">Troubleshooting</a>
 <ul class="sectlevel2">
 <li><a href="#troubleshooting">Tests fail quickly</a></li>
@@ -2438,27 +2446,39 @@ Upgrading openQA does not automatically update /etc/openqa/openqa.ini. Review yo
 </div>
 </div>
 <div class="sect1">
-<h2 id="_filesystem_layout">Filesystem Layout</h2>
+<h2 id="_filesystem_layout">Filesystem layout</h2>
 <div class="sectionbody">
 <div id="filesystem" class="paragraph">
-<p>The openQA web interface can be started via MOJO_REVERSE_PROXY=1 morbo script/openqa in
-development mode.</p>
+<p>Tests, needles, assets, results and working directories (a.k.a. "pool directories") are located in certain
+subdirectories within /var/lib/openqa. This directory is configurable (see
+<a href="#customize_base_directory">Customize base directory</a>). Here we assume the default is in place.</p>
 </div>
 <div class="paragraph">
-<p>/var/lib/openqa/ must be owned by root and contain several sub
-directories, most of which must be owned by the user that runs openQA
-(default 'geekotest'):</p>
+<p>Note that the sub directories within /var/lib/openqa must be accessible by the user that runs the openQA web UI
+(by default 'geekotest') or by the user that runs the worker/isotovideo (by default '_openqa-worker').</p>
+</div>
+<div class="paragraph">
+<p>These are the most important sub directories within /var/lib/openqa:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>db contains the database lockfile</p>
+<p>db contains the web UI&#8217;s database lockfile</p>
 </li>
 <li>
-<p>images is where the server stores test screenshots and thumbnails</p>
+<p>images is where the web UI stores test screenshots and thumbnails</p>
 </li>
 <li>
-<p>share contains shared directories for remote workers, can be owned by root</p>
+<p>testresults is where the web UI stores test logs and test-generated assets</p>
+</li>
+<li>
+<p>webui is where the web UI stores miscellaneous files</p>
+</li>
+<li>
+<p>pool contains working directories of the workers/isotovideo</p>
+</li>
+<li>
+<p>share contains directories shared between the web UI and (remote) workers, can be owned by root</p>
 </li>
 <li>
 <p>share/factory contains test assets and temp directory, can be owned by root but sysadmin must create subdirs</p>
@@ -2480,9 +2500,6 @@ directories, most of which must be owned by the user that runs openQA
 </li>
 <li>
 <p>share/tests contains the tests themselves</p>
-</li>
-<li>
-<p>testresults is where the server stores test logs and test-generated assets</p>
 </li>
 </ul>
 </div>
@@ -2539,13 +2556,127 @@ software.</p>
 <p>/var/lib/openqa/pool/2</p>
 </li>
 <li>
-<p>&#8230;&#8203;. - add more if you have more CPUs/disks</p>
+<p>&#8230;&#8203; - add more if you have more worker instances</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
 <p>You can also give the whole pool directory to the _openqa-worker user and let
 the workers create their own instance directories.</p>
+</div>
+<div class="sect2">
+<h3 id="_terms_and_variables_for_certain_directories_used_by_openqa_and_isotovideo">Terms and variables for certain directories used by openQA and isotovideo</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>the "base directory"</p>
+<div class="ulist">
+<ul>
+<li>
+<p>by default /var/lib</p>
+</li>
+<li>
+<p>configurable via environment variable OPENQA_BASEDIR</p>
+</li>
+<li>
+<p>referred as $basedir within openQA</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>the "project directory"</p>
+<div class="ulist">
+<ul>
+<li>
+<p>defined as $basedir/openqa, by default /var/lib/openqa</p>
+</li>
+<li>
+<p>referred as $prjdir within openQA</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>the "share directory": contains directories shared between web UI and (remote) workers</p>
+<div class="ulist">
+<ul>
+<li>
+<p>defined as $prjdir/share, by default /var/lib/openqa/share</p>
+</li>
+<li>
+<p>referred as $sharedir within openQA</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>the "test case directory": contains a test distribution</p>
+<div class="ulist">
+<ul>
+<li>
+<p>by default $sharedir/tests/$distri or $sharedir/tests/$distri-$version</p>
+</li>
+<li>
+<p>configurable via the test variable CASEDIR (see backend variables documentation)</p>
+</li>
+<li>
+<p>this default is provided by openQA; when starting isotovideo manually the CASEDIR variable <strong>must</strong> be
+initialized by hand</p>
+</li>
+<li>
+<p>might contain the sub directory lib for placing Perl modules used by the tests</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>the "product directory": contains the test schedule (main.pm) for a certain product within a test distribution</p>
+<div class="ulist">
+<ul>
+<li>
+<p>by default identical to the "test case directory"</p>
+</li>
+<li>
+<p>usually a directory products/$distri within the "test case directory"</p>
+</li>
+<li>
+<p>configurable via the test variable PRODUCTDIR (see backend variables documentation)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>the "needles directory": contains reference images for a certain product within a test distribution</p>
+<div class="ulist">
+<ul>
+<li>
+<p>by default $PRODUCTDIR/needles</p>
+</li>
+<li>
+<p>configurable via the test variable NEEDLES_DIR (see backend variables documentation)</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="_further_notes">Further notes</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Setting the test variables has only an influence on os-autoinst. The web UI on the other hand always relies
+on the directory structure described above. For the exact details how these paths are computed by the web UI
+have a look at lib/OpenQA/Utils.pm.</p>
+</li>
+<li>
+<p>When enabling the worker cache parts of the usual "share directory" are located in the specified cache
+directory on the worker host.</p>
+</li>
+</ul>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -7560,7 +7691,7 @@ after user validation. See included modules for inspiration.</p>
 <div class="sect1">
 <h2 id="_customize_base_directory">Customize base directory</h2>
 <div class="sectionbody">
-<div class="paragraph">
+<div id="customize_base_directory" class="paragraph">
 <p>It is possible to customize the openQA base directory (which is for instance used to store
 test results) by setting the environment variable OPENQA_BASEDIR. The default value
 is /var/lib. Be sure to clear that variable when running unit tests locally (see next
@@ -7941,7 +8072,7 @@ format.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-10-15 13:17:30 UTC
+Last updated 2019-10-15 14:37:08 +0200
 </div>
 </div>
 <style>
